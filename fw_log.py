@@ -109,34 +109,38 @@ class fw_log_file:
             return line_content
 
 
-    def _order_unicity_dict(self, unicity_dict, unicity_in_keys, unicity_out_keys):
+    def _order_unicity_dict(self, unicity_dict, unicity_in_keys):
+        """ Transform tuple to ordered list with keys
+                unicity_dict = (("1.1.1.1","2.2.2.2","80"),80)
+                unicity_in_keys = ("src_ip","dst_ip","dst_port")
+                Return => unicitiy_list = 
+                    [["src_ip","dst_ip","hit"],
+                    ["1.1.1.1","2.2.2.2","80"]]
+
+        Args:
+            unicity_dict (tuple): Unordered tuple
+            unicity_in_keys (tuple): Dictionary keys
+
+        Returns:
+            (list): List containing ordered dict kesy
+        """
         # 1 - Create final list
         unicity_list = list()
-        for in_key in unicity_dict:
-            out_dict = unicity_dict.get(in_key,False)
-            for out_key in out_dict:
-                out_value = out_dict.get(out_key, False)
-                out_values = (in_key, out_key, out_value)
-                unicity_list.append(out_values)
+        for key_value in unicity_dict.items():
+            if len(key_value) == 2:
+                unicity_key = list(key_value[0]).copy()
+                unicity_value = list(key_value)[1]
+                unicity_key.append(unicity_value)
+            unicity_list.append(unicity_key.copy())
 
         # Sort dictionary by value
-        unicity_list = sorted(unicity_list, key=operator.itemgetter(2), reverse=True)
-        unicity_list.insert(0,(unicity_in_keys,unicity_out_keys,("hit_count",)))
+        unicity_list = sorted(unicity_list, key=operator.itemgetter(-1), reverse=True)
+        
+        # Add header to list
+        unicity_header = list(unicity_in_keys) + ["hit"]
+        unicity_list.insert(0,unicity_header)
 
-        # Unpack dict
-        unicity_list_out = list()
-        for item in unicity_list:
-            unicity_src = list(item[0])
-            unicity_dst = list(item[1])
-            if isinstance(item[2],tuple):
-                unicity_hit = list(item[2])
-                unicity_out = unicity_src + unicity_dst + unicity_hit
-            else:
-                unicity_out = unicity_src + unicity_dst
-                unicity_out.append(str(item[2]))
-            unicity_list_out.append(unicity_out)
-
-        return unicity_list_out
+        return unicity_list
 
 
     def cls(self):
@@ -145,7 +149,7 @@ class fw_log_file:
         os.system('cls' if os.name=='nt' else 'clear')
 
 
-    def select_unicity_criterias(self, unicity_type=""):
+    def select_unicity_criterias(self):
         """Display a menu to help user to select criterias of unicity
 
         Args:
@@ -166,7 +170,7 @@ class fw_log_file:
             # Prompt user to check his choice
             while True:
                 self.cls()  # Clear display
-                print(f"Please select keys number from the following list for {unicity_type} criterias:")
+                print(f"Please select keys number from the following list for criterias:")
                 print(f"[INFO] Current selection => {user_choice_list_result}")
                 for key_id, key_value in enumerate(log_keys):
                     print(f"{key_id}. {key_value}")
@@ -182,8 +186,6 @@ class fw_log_file:
                 except ValueError:
                     if (len(user_choice_list_result) > 0 and user_choice == ""):
                         break
-                    elif (len(user_choice_list_result) == 0 and user_choice == "" and unicity_type.lower() == "output"):
-                        break
                     else:
                         input('[ERROR] Value entered is invalid, please try again')
             user_choice_list_result = tuple(user_choice_list_result)
@@ -191,7 +193,7 @@ class fw_log_file:
         return user_choice_list_result
 
 
-    def get_log_matching(self, unicity_in_keys, unicity_out_keys=("hit_count",)):
+    def get_log_matching(self, unicity_keys):
         # 0 - Parse all log line (dict)
         unicity_dict = dict()  # This dict will contains unique matching values
         for log_line_dict in self.log_content:
@@ -204,28 +206,19 @@ class fw_log_file:
             if not log_line_dict:
                 continue
 
-            # unicity_in_keys
-            for unique_key in unicity_in_keys: # Check each unicity key
+            # Parse unicity_keys
+            for unique_key in unicity_keys: # Check each unicity key
                 unique_in_list.append(log_line_dict.get(unique_key,None))
             unique_in_list = tuple(unique_in_list)
 
-            # unicity_out_keys
-            for unique_key in unicity_out_keys: # Check each unicity key
-                if unique_key != "hit_count":
-                    unique_out_list.append(log_line_dict.get(unique_key,None))
-            unique_out_list = tuple(unique_out_list)
-
             # Check if input key exist result dict
             if not unicity_dict.get(unique_in_list,False): # First match of input key
-                unicity_dict[unique_in_list] = dict()
-                
-            # Check if output key exist
-            if not unicity_dict[unique_in_list].get(unique_out_list,False):
-                unicity_dict[unique_in_list][unique_out_list] = 1
+                unicity_dict[unique_in_list] = 1
             else:
-                unicity_dict[unique_in_list][unique_out_list] += 1
+                unicity_dict[unique_in_list] += 1
+                
 
-        unicity_list = self._order_unicity_dict(unicity_dict, unicity_in_keys, unicity_out_keys)
+        unicity_list = self._order_unicity_dict(unicity_dict, unicity_keys)
 
         return unicity_list
 
