@@ -182,6 +182,8 @@ class fw_log_file:
                 except ValueError:
                     if (len(user_choice_list_result) > 0 and user_choice == ""):
                         break
+                    elif (len(user_choice_list_result) == 0 and user_choice == "" and unicity_type.lower() == "output"):
+                        break
                     else:
                         input('[ERROR] Value entered is invalid, please try again')
             user_choice_list_result = tuple(user_choice_list_result)
