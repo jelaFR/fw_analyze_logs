@@ -10,7 +10,7 @@ def write_result_to_file(list_content, filename):
             f.close()
             break
         except PermissionError:
-            input(f"[ERROR] Merci de fermer le fichier {filename} et appuyer sur Entrée")
+            input(f"[ERROR] Please close the {filename} then press RETURN")
     
 
 if __name__ == "__main__":
@@ -35,8 +35,10 @@ if __name__ == "__main__":
         input(f"[INFO] File contains : {len(fw_log.log_lines)} line(s) ; all line(s) does match REGEXP!")
 
     # Select input and output criterias
-    in_criterias = fw_log.select_unicity_criterias("INPUT")
-    out_criterias = fw_log.select_unicity_criterias("OUTPUT")
+    unicity_criteria = fw_log.select_unicity_criterias()
 
-    result = fw_log.get_log_matching(in_criterias,out_criterias)
-    pass
+    # Parse logs looking for unicity
+    result = fw_log.get_log_matching(unicity_criteria)
+
+    # Write result to file
+    write_result_to_file(result, out_file)
