@@ -15,10 +15,8 @@ def write_result_to_file(list_content, filename):
 
 if __name__ == "__main__":
     # Initiate vars
-    out_file = r"C:\Users\jlayrisse\logs_fw\out.csv"
-    #fw_log_filename = r"C:\Users\jlayrisse\logs_fw\disk-traffic-forward-2021-09-29_0846.log"  # 
-    fw_log_filename = r"C:\Users\jlayrisse\logs_fw\disk-traffic-forward-2021-10-12_1426.log"  # SEWAN
-    #fw_log_filename = r"C:\Users\jlayrisse\logs_fw\disk-traffic-lite.log"  # Lite
+    out_file = r"out.csv"
+    fw_log_filename = r"filename"
 
     # Analyse log
     fw_log = fw_log.fw_log_file(fw_log_filename,1000)
